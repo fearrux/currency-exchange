@@ -4,18 +4,15 @@ import java.util.Objects;
 
 public class ExchangeRate {
     private Integer id;
-    private Integer baseCurrencyId;
-    private Integer targetCurrencyId;
+    private Currency baseCurrency;
+    private Currency targetCurrency;
     private Double rate;
 
-    public ExchangeRate(Integer id, Integer baseCurrencyId, Integer targetCurrencyId, Double rate) {
+    public ExchangeRate(Integer id, Currency baseCurrency, Currency targetCurrency, Double rate) {
         this.id = id;
-        this.baseCurrencyId = baseCurrencyId;
-        this.targetCurrencyId = targetCurrencyId;
+        this.baseCurrency = baseCurrency;
+        this.targetCurrency = targetCurrency;
         this.rate = rate;
-    }
-
-    public ExchangeRate() {
     }
 
     public Integer getId() {
@@ -26,20 +23,20 @@ public class ExchangeRate {
         this.id = id;
     }
 
-    public Integer getBaseCurrencyId() {
-        return baseCurrencyId;
+    public Currency getBaseCurrency() {
+        return baseCurrency;
     }
 
-    public void setBaseCurrencyId(Integer baseCurrencyId) {
-        this.baseCurrencyId = baseCurrencyId;
+    public void setBaseCurrency(Currency baseCurrency) {
+        this.baseCurrency = baseCurrency;
     }
 
-    public Integer getTargetCurrencyId() {
-        return targetCurrencyId;
+    public Currency getTargetCurrency() {
+        return targetCurrency;
     }
 
-    public void setTargetCurrencyId(Integer targetCurrencyId) {
-        this.targetCurrencyId = targetCurrencyId;
+    public void setTargetCurrency(Currency targetCurrency) {
+        this.targetCurrency = targetCurrency;
     }
 
     public Double getRate() {
@@ -55,20 +52,20 @@ public class ExchangeRate {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         ExchangeRate that = (ExchangeRate) object;
-        return Objects.equals(id, that.id) && Objects.equals(baseCurrencyId, that.baseCurrencyId) && Objects.equals(targetCurrencyId, that.targetCurrencyId) && Objects.equals(rate, that.rate);
+        return Objects.equals(id, that.id) && Objects.equals(baseCurrency, that.baseCurrency) && Objects.equals(targetCurrency, that.targetCurrency) && Objects.equals(rate, that.rate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, baseCurrencyId, targetCurrencyId, rate);
+        return Objects.hash(id, baseCurrency, targetCurrency, rate);
     }
 
     @Override
     public String toString() {
         return "ExchangeRate{" +
                "id=" + id +
-               ", baseCurrencyId=" + baseCurrencyId +
-               ", targetCurrencyId=" + targetCurrencyId +
+               ", baseCurrency=" + baseCurrency +
+               ", targetCurrency=" + targetCurrency +
                ", rate=" + rate +
                '}';
     }
