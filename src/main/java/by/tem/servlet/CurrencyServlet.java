@@ -31,9 +31,9 @@ public class CurrencyServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("application/json");
         String code = req.getPathInfo().substring(1);
-        CurrencyValidator.isValidCode(code);
         PrintWriter writer = resp.getWriter();
         try {
+            CurrencyValidator.isValidCode(code);
             CurrencyDto currencyDto = currencyService.findByCode(code);
             resp.setStatus(HttpServletResponse.SC_CREATED);
             String json = objectMapper.writeValueAsString(currencyDto);
