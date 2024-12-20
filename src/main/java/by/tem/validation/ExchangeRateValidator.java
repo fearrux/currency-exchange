@@ -17,4 +17,17 @@ public class ExchangeRateValidator {
         }
         return true;
     }
+
+    public static boolean isValidRate(String rate) {
+        if (rate == null) {
+            throw new InvalidDataException("A rate cannot be null");
+        }
+        if (!rate.matches("^(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?$")) {
+            throw new InvalidDataException("A rate must be number.");
+        }
+        if (Double.parseDouble(rate) < 0) {
+            throw new InvalidDataException("A rate must be positive number.");
+        }
+        return true;
+    }
 }
