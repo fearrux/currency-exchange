@@ -25,8 +25,8 @@ public class ExchangeRateValidator {
         if (!rate.matches("^(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?$")) {
             throw new InvalidDataException("A rate must be number.");
         }
-        if (Double.parseDouble(rate) < 0) {
-            throw new InvalidDataException("A rate must be positive number.");
+        if (Double.parseDouble(rate) <= 0) {
+            throw new InvalidDataException("A rate must be positive number and not equal zero.");
         }
         return true;
     }
