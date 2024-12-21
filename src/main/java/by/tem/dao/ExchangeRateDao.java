@@ -4,6 +4,7 @@ import by.tem.entity.Currency;
 import by.tem.entity.ExchangeRate;
 import by.tem.util.ConnectionManager;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +76,7 @@ public class ExchangeRateDao {
              PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setInt(1, exchangeRate.getBaseCurrency().getId());
             preparedStatement.setInt(2, exchangeRate.getTargetCurrency().getId());
-            preparedStatement.setDouble(3, exchangeRate.getRate());
+            preparedStatement.setBigDecimal(3, exchangeRate.getRate());
             preparedStatement.executeUpdate();
             ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
@@ -87,16 +88,14 @@ public class ExchangeRateDao {
         }
     }
 
-    public boolean update(String baseCurrencyCode, String targetCurrencyCode, double rate) {
+    public boolean update(String baseCurrencyCode, String targetCurrencyCode, BigDecimal rate) throws SQLException {
         try (Connection connection = ConnectionManager.get();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
-            preparedStatement.setDouble(1, rate);
+            preparedStatement.setBigDecimal(1, rate);
             preparedStatement.setString(2, baseCurrencyCode);
             preparedStatement.setString(3, targetCurrencyCode);
             int result = preparedStatement.executeUpdate();
             return result > 0;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -113,7 +112,7 @@ public class ExchangeRateDao {
                         resultSet.getString("target_full_name"),
                         resultSet.getString("target_code"),
                         resultSet.getString("target_sign")),
-                resultSet.getDouble("rate")
+                resultSet.getBigDecimal("rate")
         );
     }
 
