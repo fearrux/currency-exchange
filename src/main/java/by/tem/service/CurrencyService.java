@@ -5,7 +5,9 @@ import by.tem.dto.CurrencyDto;
 import by.tem.entity.Currency;
 import by.tem.exception.CurrencyExistsException;
 import by.tem.exception.CurrencyNotFoundException;
+import by.tem.exception.InvalidDataException;
 import by.tem.mapper.CurrencyMapper;
+import by.tem.validation.CurrencyValidator;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,27 +15,43 @@ import java.util.Optional;
 public class CurrencyService {
     private static final CurrencyService INSTANCE = new CurrencyService();
     private final CurrencyDao currencyDao = CurrencyDao.getInstance();
+    private final CurrencyValidator currencyValidator = new CurrencyValidator();
+    private final CurrencyMapper currencyMapper = CurrencyMapper.getInstance();
 
     public List<CurrencyDto> findAll() {
-        return CurrencyMapper.toDtoList(currencyDao.findAll());
+        return currencyDao.findAll().stream().map(currencyMapper::toDto).toList();
     }
 
     public CurrencyDto findByCode(String code) {
-        Optional<Currency> currencyOptional = currencyDao.findByCode(code);
-        if (currencyOptional.isPresent()) {
-            return CurrencyMapper.toDto(currencyOptional.get());
+        if (!currencyValidator.isValidCode(code)) {
+            throw new InvalidDataException("Code is incorrect.");
         }
-        throw new CurrencyNotFoundException("Currency with code " + code + " not found.");
+
+        Optional<Currency> currencyOptional = currencyDao.findByCode(code);
+        Currency currency = currencyOptional.orElseThrow(() -> new CurrencyNotFoundException("Currency with " + code + " not found."));
+
+        return currencyMapper.toDto(currency);
     }
 
     public CurrencyDto save(CurrencyDto currencyDto) {
-        Currency currency = CurrencyMapper.toCurrency(currencyDto);
-        Optional<Currency> currencyOptional = currencyDao.findByCode(currency.getCode());
-        if (currencyOptional.isEmpty()) {
-            Currency savedCurrency = currencyDao.save(currency);
-            return CurrencyMapper.toDto(savedCurrency);
+        if (!currencyValidator.isValidName(currencyDto.name())) {
+            throw new InvalidDataException("Name is incorrect.");
         }
-        throw new CurrencyExistsException("Currency with code " + currency.getCode() + " already exists.");
+        if (!currencyValidator.isValidCode(currencyDto.code())) {
+            throw new InvalidDataException("Code is incorrect");
+        }
+        if (!currencyValidator.isValidSign(currencyDto.sign())) {
+            throw new InvalidDataException("Sign is incorrect.");
+        }
+
+        Currency currency = currencyMapper.toEntity(currencyDto);
+        Optional<Currency> currencyOptional = currencyDao.findByCode(currency.getCode());
+        if (currencyOptional.isPresent()) {
+            throw new CurrencyExistsException("Currency with code " + currency.getCode() + " already exists.");
+        }
+
+        Currency savedCurrency = currencyDao.save(currency);
+        return currencyMapper.toDto(savedCurrency);
     }
 
     public static CurrencyService getInstance() {
