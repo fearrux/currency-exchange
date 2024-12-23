@@ -1,33 +1,22 @@
 package by.tem.validation;
 
-import by.tem.exception.InvalidDataException;
+import java.math.BigDecimal;
+import java.util.regex.Pattern;
 
 public class ExchangeRateValidator {
-    public static final int EXCHANGE_RATE_LENGTH = 6;
+    private static final int EXCHANGE_RATE_LENGTH = 6;
+    private static final Pattern VALID_PATTERN_EXCHANGE_RATE = Pattern.compile("[a-zA-Z]+");
+    private static final Pattern VALID_PATTERN_NUMBER = Pattern.compile("^(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?$");
 
-    public static boolean isValidExchangeRate(String exchangeRate) {
-        if (exchangeRate == null) {
-            throw new InvalidDataException("Exchange rate cannot be null.");
-        }
-        if (exchangeRate.length() != EXCHANGE_RATE_LENGTH) {
-            throw new InvalidDataException("Exchange rate is incorrect.");
-        }
-        if (!exchangeRate.matches("[a-zA-Z]+")) {
-            throw new InvalidDataException("Exchange rate must consist only of English letters.");
-        }
-        return true;
+    public boolean isValidExchangeRate(String exchangeRate) {
+        return exchangeRate != null
+               && exchangeRate.length() == EXCHANGE_RATE_LENGTH
+               && VALID_PATTERN_EXCHANGE_RATE.matcher(exchangeRate).matches();
     }
 
-    public static boolean isValidRate(String rate) {
-        if (rate == null) {
-            throw new InvalidDataException("A rate cannot be null");
-        }
-        if (!rate.matches("^(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?$")) {
-            throw new InvalidDataException("A rate must be number.");
-        }
-        if (Double.parseDouble(rate) <= 0) {
-            throw new InvalidDataException("A rate must be positive number and not equal zero.");
-        }
-        return true;
+    public boolean isValidNumber(String number) {
+        return number != null
+               && VALID_PATTERN_NUMBER.matcher(number).matches()
+               && new BigDecimal(number).compareTo(BigDecimal.ZERO) > 0;
     }
 }
