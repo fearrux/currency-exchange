@@ -9,7 +9,7 @@ public class CurrencyMapper {
     public CurrencyDto toDto(Currency currency) {
         return new CurrencyDto(
                 currency.getId(),
-                currency.getFullName(),
+                currency.getName(),
                 currency.getCode(),
                 currency.getSign());
     }
