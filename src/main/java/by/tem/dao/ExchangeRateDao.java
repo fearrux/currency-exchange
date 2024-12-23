@@ -2,7 +2,8 @@ package by.tem.dao;
 
 import by.tem.entity.Currency;
 import by.tem.entity.ExchangeRate;
-import by.tem.util.ConnectionManager;
+import by.tem.exception.DatabaseConnectionException;
+import by.tem.util.ConnectionPoolService;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -31,7 +32,7 @@ public class ExchangeRateDao {
             WHERE base_code = ? AND target_code = ?
             """;
     private static final String SAVE_SQL = """
-            INSERT INTO main.exchange_rates(base_currency_id, target_currency_id, rate)
+            INSERT INTO exchange_rates(base_currency_id, target_currency_id, rate)
             VALUES (?, ?, ?)
             """;
     private static final String UPDATE_SQL = """
@@ -43,7 +44,7 @@ public class ExchangeRateDao {
 
     public List<ExchangeRate> findAll() {
         List<ExchangeRate> exchangeRates = new ArrayList<>();
-        try (Connection connection = ConnectionManager.get();
+        try (Connection connection = ConnectionPoolService.get();
              PreparedStatement preparedStatement = connection.prepareStatement(FIND_ALL_SQL)) {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -51,12 +52,12 @@ public class ExchangeRateDao {
             }
             return exchangeRates;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseConnectionException("Something went wrong when you tried to connect database.");
         }
     }
 
     public Optional<ExchangeRate> findByCode(String baseCurrencyCode, String targetCurrencyCode) {
-        try (Connection connection = ConnectionManager.get();
+        try (Connection connection = ConnectionPoolService.get();
              PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_CODE_SQL)) {
             preparedStatement.setString(1, baseCurrencyCode);
             preparedStatement.setString(2, targetCurrencyCode);
@@ -67,12 +68,12 @@ public class ExchangeRateDao {
             }
             return Optional.ofNullable(exchangeRate);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseConnectionException("Something went wrong when you tried to connect database.");
         }
     }
 
     public ExchangeRate save(ExchangeRate exchangeRate) {
-        try (Connection connection = ConnectionManager.get();
+        try (Connection connection = ConnectionPoolService.get();
              PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setInt(1, exchangeRate.getBaseCurrency().getId());
             preparedStatement.setInt(2, exchangeRate.getTargetCurrency().getId());
@@ -84,18 +85,20 @@ public class ExchangeRateDao {
             }
             return exchangeRate;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseConnectionException("Something went wrong when you tried to connect database.");
         }
     }
 
-    public boolean update(String baseCurrencyCode, String targetCurrencyCode, BigDecimal rate) throws SQLException {
-        try (Connection connection = ConnectionManager.get();
+    public boolean update(String baseCurrencyCode, String targetCurrencyCode, BigDecimal rate) {
+        try (Connection connection = ConnectionPoolService.get();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_SQL)) {
             preparedStatement.setBigDecimal(1, rate);
             preparedStatement.setString(2, baseCurrencyCode);
             preparedStatement.setString(3, targetCurrencyCode);
             int result = preparedStatement.executeUpdate();
             return result > 0;
+        } catch (SQLException e) {
+            throw new DatabaseConnectionException("Something went wrong when you tried to connect database.");
         }
     }
 
