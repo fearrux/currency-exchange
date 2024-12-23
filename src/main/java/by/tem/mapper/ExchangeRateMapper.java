@@ -3,11 +3,10 @@ package by.tem.mapper;
 import by.tem.dto.ExchangeRateDto;
 import by.tem.entity.ExchangeRate;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class ExchangeRateMapper {
-    public static ExchangeRateDto toDto(ExchangeRate exchangeRate) {
+    private static final ExchangeRateMapper INSTANCE = new ExchangeRateMapper();
+
+    public ExchangeRateDto toDto(ExchangeRate exchangeRate) {
         return new ExchangeRateDto(
                 exchangeRate.getId(),
                 exchangeRate.getBaseCurrency(),
@@ -16,18 +15,10 @@ public class ExchangeRateMapper {
         );
     }
 
-    public static ExchangeRate toExchangeRate(ExchangeRateDto exchangeRateDto) {
-        return new ExchangeRate(
-                exchangeRateDto.getId(),
-                exchangeRateDto.getBaseCurrency(),
-                exchangeRateDto.getTargetCurrency(),
-                exchangeRateDto.getRate()
-        );
+    public static ExchangeRateMapper getInstance() {
+        return INSTANCE;
     }
 
-    public static List<ExchangeRateDto> toDtoList(List<ExchangeRate> exchangeRates) {
-        return exchangeRates.stream()
-                .map(ExchangeRateMapper::toDto)
-                .collect(Collectors.toList());
+    private ExchangeRateMapper(){
     }
 }
