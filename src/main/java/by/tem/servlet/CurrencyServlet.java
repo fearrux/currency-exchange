@@ -1,12 +1,13 @@
 package by.tem.servlet;
 
 import by.tem.dto.CurrencyDto;
+import by.tem.dto.ErrorResponse;
 import by.tem.exception.CurrencyNotFoundException;
+import by.tem.exception.DatabaseConnectionException;
 import by.tem.exception.InvalidDataException;
 import by.tem.service.CurrencyService;
-import by.tem.validation.CurrencyValidator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -18,36 +19,34 @@ import java.io.PrintWriter;
 
 @WebServlet("/currency/*")
 public class CurrencyServlet extends HttpServlet {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final CurrencyService currencyService = CurrencyService.getInstance();
-
-    @Override
-    public void init(ServletConfig config) throws ServletException {
-        super.init(config);
-    }
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final CurrencyService currencyService = CurrencyService.getInstance();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setCharacterEncoding("UTF-8");
         resp.setContentType("application/json");
+        req.setCharacterEncoding("UTF-8");
+
         String code = req.getPathInfo().substring(1);
         PrintWriter writer = resp.getWriter();
+
         try {
-            CurrencyValidator.isValidCode(code);
-            CurrencyDto currencyDto = currencyService.findByCode(code);
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            String json = objectMapper.writeValueAsString(currencyDto);
-            writer.write(json);
-        } catch (InvalidDataException exception) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            writer.write(exception.getMessage());
-        } catch (CurrencyNotFoundException exception) {
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            writer.write(exception.getMessage());
-        } catch (RuntimeException exception) {
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            CurrencyDto currency = currencyService.findByCode(code);
+            writer.write(objectMapper.writeValueAsString(currency));
+        } catch (InvalidDataException e) {
+            sendErrorResponse(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), writer);
+        } catch (CurrencyNotFoundException e) {
+            sendErrorResponse(resp, HttpServletResponse.SC_NOT_FOUND, e.getMessage(), writer);
+        } catch (DatabaseConnectionException e) {
+            sendErrorResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), writer);
         } finally {
             writer.close();
         }
+    }
+
+    private void sendErrorResponse(HttpServletResponse resp, int statusCode, String message, PrintWriter writer) throws JsonProcessingException {
+        resp.setStatus(statusCode);
+        ErrorResponse errorResponse = new ErrorResponse(statusCode, message);
+        writer.write(objectMapper.writeValueAsString(errorResponse));
     }
 }
