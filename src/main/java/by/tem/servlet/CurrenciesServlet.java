@@ -1,11 +1,13 @@
 package by.tem.servlet;
 
 import by.tem.dto.CurrencyDto;
+import by.tem.dto.ErrorResponse;
 import by.tem.exception.CurrencyExistsException;
+import by.tem.exception.DatabaseConnectionException;
 import by.tem.exception.InvalidDataException;
 import by.tem.service.CurrencyService;
-import by.tem.validation.CurrencyValidator;
-import jakarta.servlet.ServletConfig;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -16,65 +18,57 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-
 @WebServlet("/currencies")
 public class CurrenciesServlet extends HttpServlet {
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final CurrencyService instance = CurrencyService.getInstance();
+    private final CurrencyService currencyService = CurrencyService.getInstance();
 
     @Override
-    public void init(ServletConfig config) throws ServletException {
-        super.init(config);
-    }
-
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
+        req.setCharacterEncoding("UTF-8");
         PrintWriter writer = resp.getWriter();
-        try {
-            List<CurrencyDto> currencies = instance.findAll();
-            String json = objectMapper.writeValueAsString(currencies);
-            writer.write(json);
-        } catch (RuntimeException exception) {
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            writer.write(exception.getMessage());
-        }
-    }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.setContentType("application/json");
-        resp.setCharacterEncoding("UTF-8");
-        String name = req.getParameter("name");
-        String code = req.getParameter("code");
-        String sign = req.getParameter("sign");
-        PrintWriter writer = resp.getWriter();
         try {
-            CurrencyValidator.isValidName(name);
-            CurrencyValidator.isValidCode(code);
-            CurrencyValidator.isValidSign(sign);
-            CurrencyDto currencyDto = new CurrencyDto();
-            currencyDto.setName(name);
-            currencyDto.setCode(code);
-            currencyDto.setSign(sign);
-            CurrencyDto result = instance.save(currencyDto);
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            String json = objectMapper.writeValueAsString(result);
-            writer.write(json);
-        } catch (InvalidDataException exception) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            writer.write(exception.getMessage());
-        } catch (CurrencyExistsException exception) {
-            resp.setStatus(HttpServletResponse.SC_CONFLICT);
-            writer.write(exception.getMessage());
-        } catch (RuntimeException exception) {
+            List<CurrencyDto> currencies = currencyService.findAll();
+            writer.write(objectMapper.writeValueAsString(currencies));
+        } catch (DatabaseConnectionException e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            writer.write(exception.getMessage());
+            ErrorResponse errorResponse = new ErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            writer.write(objectMapper.writeValueAsString(errorResponse));
         } finally {
             writer.close();
         }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+        req.setCharacterEncoding("UTF-8");
+        PrintWriter writer = resp.getWriter();
+
+        String name = req.getParameter("name");
+        String code = req.getParameter("code");
+        String sign = req.getParameter("sign");
+
+        try {
+            CurrencyDto currency = currencyService.save(new CurrencyDto(null, name, code, sign));
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+            writer.write(objectMapper.writeValueAsString(currency));
+        } catch (InvalidDataException e) {
+            sendErrorResponse(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), writer);
+        } catch (CurrencyExistsException e) {
+            sendErrorResponse(resp, HttpServletResponse.SC_CONFLICT, e.getMessage(), writer);
+        } catch (DatabaseConnectionException e) {
+            sendErrorResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), writer);
+        } finally {
+            writer.close();
+        }
+    }
+
+    private void sendErrorResponse(HttpServletResponse resp, int statusCode, String message, PrintWriter writer) throws JsonProcessingException {
+        resp.setStatus(statusCode);
+        ErrorResponse errorResponse = new ErrorResponse(statusCode, message);
+        writer.write(objectMapper.writeValueAsString(errorResponse));
     }
 }
