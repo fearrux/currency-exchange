@@ -17,6 +17,7 @@ import by.tem.validation.ExchangeRateValidator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,14 +49,20 @@ public class ExchangeRateService {
     }
 
     public ExchangeRateDto save(String baseCurrencyCode, String targetCurrencyCode, String rate) {
+        List<String> errorMessages = new ArrayList<>();
+
         if (!currencyValidator.isValidCode(baseCurrencyCode)) {
-            throw new InvalidDataException("Base currency code is incorrect.");
+            errorMessages.add("The currency code %s is incorrect. It's must contain only English letters and be 3 long.".formatted(baseCurrencyCode));
         }
         if (!currencyValidator.isValidCode(targetCurrencyCode)) {
-            throw new InvalidDataException("Target currency code is incorrect.");
+            errorMessages.add("The currency code %s is incorrect. It's must contain only English letters and be 3 long.".formatted(targetCurrencyCode));
         }
         if (!exchangeRateValidator.isValidNumber(rate)) {
-            throw new InvalidDataException("Rate is incorrect.");
+            errorMessages.add("The rate must be more than zero and consist only numbers.");
+        }
+
+        if (!errorMessages.isEmpty()) {
+            throw new InvalidDataException(String.join(" ", errorMessages));
         }
 
         Currency baseCurrency = currencyDao.findByCode(baseCurrencyCode)
@@ -76,11 +83,17 @@ public class ExchangeRateService {
     }
 
     public ExchangeRateDto update(String codes, String rate) {
+        List<String> errorMessages = new ArrayList<>();
+
         if (!exchangeRateValidator.isValidExchangeRate(codes)) {
-            throw new InvalidDataException("Exchange rate is incorrect.");
+            errorMessages.add("Exchange rate is incorrect.");
         }
         if (!exchangeRateValidator.isValidNumber(rate)) {
-            throw new InvalidDataException("Exchange rate is incorrect.");
+            errorMessages.add("The rate must be more than zero and consist only numbers.");
+        }
+
+        if (!errorMessages.isEmpty()) {
+            throw new InvalidDataException(String.join(" ", errorMessages));
         }
 
         String baseCurrencyCode = codes.substring(0, 3);
@@ -95,14 +108,20 @@ public class ExchangeRateService {
     }
 
     public CurrencyExchangeDto exchange(String from, String to, String amount) {
+        List<String> errorMessages = new ArrayList<>();
+
         if (!currencyValidator.isValidCode(from)) {
-            throw new InvalidDataException("Code: " + from + " is incorrect.");
+            errorMessages.add("The currency code %s is incorrect. It's must contain only English letters and be 3 long.".formatted(from));
         }
-        if (!currencyValidator.isValidCode(to)) {
-            throw new InvalidDataException("Code: " + from + " is incorrect.");
+        if (!currencyValidator.isValidCode(from)) {
+            errorMessages.add("The currency code %s is incorrect. It's must contain only English letters and be 3 long.".formatted(to));
         }
         if (!exchangeRateValidator.isValidNumber(amount)) {
-            throw new InvalidDataException("Amount: " + amount + " + is incorrect.");
+            errorMessages.add("The amount must be more than zero and consist only numbers.");
+        }
+
+        if (!errorMessages.isEmpty()) {
+            throw new InvalidDataException(String.join(" ", errorMessages));
         }
 
         // direct

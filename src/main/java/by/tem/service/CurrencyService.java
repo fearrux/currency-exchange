@@ -9,6 +9,7 @@ import by.tem.exception.InvalidDataException;
 import by.tem.mapper.CurrencyMapper;
 import by.tem.validation.CurrencyValidator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,14 +35,20 @@ public class CurrencyService {
     }
 
     public CurrencyDto save(CurrencyDto currencyDto) {
+        List<String> errorMessages = new ArrayList<>();
+
         if (!currencyValidator.isValidName(currencyDto.name())) {
-            throw new InvalidDataException("Name is incorrect.");
+            errorMessages.add("The currency name must be no more than 30 characters and no less than 2, and must be in English letters only.");
         }
         if (!currencyValidator.isValidCode(currencyDto.code())) {
-            throw new InvalidDataException("Code is incorrect");
+            errorMessages.add("The currency code must contain only English letters and be 3 long.");
         }
         if (!currencyValidator.isValidSign(currencyDto.sign())) {
-            throw new InvalidDataException("Sign is incorrect.");
+            errorMessages.add("The currency sign must be no more than 3 characters and consist of only English letters.");
+        }
+
+        if (!errorMessages.isEmpty()) {
+            throw new InvalidDataException(String.join(" ", errorMessages));
         }
 
         Currency currency = currencyMapper.toEntity(currencyDto);
