@@ -245,7 +245,7 @@ Example response - JSON representation of the inserted record, including its ID:
 1. Clone the repository:
 
    ```bash
-   https://github.com/tem1dev/currency-exchange.git
+   [https://github.com/fearrux/tennis-scoreboard.git](https://github.com/fearrux/currency-exchange.git)
    ```  
 2. Open IntelliJ IDEA.
 3. In the main menu, click on Open and select the folder you cloned in the first step.
